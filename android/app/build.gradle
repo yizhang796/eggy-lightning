@@ -1,0 +1,16 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.eggy.lightning'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'com.eggy.lightning'
+        minSdk 23
+        targetSdk 36
+        versionCode 12
+        versionName '1.2.0'
+    }
+}
