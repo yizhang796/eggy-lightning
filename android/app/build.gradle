@@ -10,7 +10,7 @@ android {
         applicationId 'com.eggy.lightning'
         minSdk 23
         targetSdk 36
-        versionCode 12
-        versionName '1.2.0'
+        versionCode 20
+        versionName '2.0.0'
     }
 }
