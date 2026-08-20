@@ -27,12 +27,11 @@
     background:var(--panel); padding:16px; border-radius:18px;
     box-shadow: 0 20px 60px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.04);
   }
-  .stats{
-    display:flex; gap:6px; justify-content:space-between; align-items:center;
-    margin: 4px 4px 10px; font-size:13px;
-  }
-  .stats div{ color:var(--muted); white-space:nowrap; }
+  .stats{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; margin:4px 0 10px; font-size:11px; }
+  .stats div{ color:var(--muted); white-space:nowrap; padding:6px 4px; text-align:center; border-radius:8px; background:rgba(11,26,34,.65); border:1px solid rgba(148,163,184,.10); }
   .stats b{ color:var(--accent); margin-left:4px; font-weight:700; }
+  .stats .coin-stat b{ color:#fcd34d; }
+  .stats .shield-stat b{ color:#67e8f9; }
   canvas{
     width:100%; height:auto; aspect-ratio:5 / 7;
     background: radial-gradient(circle at 50% 30%, #1e2a4a, #0d1424);
@@ -40,6 +39,24 @@
     box-shadow: inset 0 0 0 2px rgba(255,255,255,.05);
     touch-action: none;
   }
+  .game-stage{ position:relative; }
+  .game-over{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:18px; background:rgba(3,8,20,.68); backdrop-filter:blur(5px); z-index:5; }
+  .game-over[hidden]{ display:none; }
+  .game-over-card{ width:min(340px,100%); padding:22px 20px 18px; border-radius:20px; text-align:center; background:linear-gradient(155deg,rgba(30,41,74,.98),rgba(12,25,43,.98)); border:1px solid rgba(251,191,36,.42); box-shadow:0 18px 48px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08); }
+  .over-kicker{ color:#a5b4fc; font-size:10px; letter-spacing:2px; font-weight:800; }
+  .game-over h2{ margin:7px 0 4px; color:#fde68a; font-size:27px; }
+  .over-reason{ margin:0 0 16px; color:#cbd5e1; font-size:12px; line-height:1.5; }
+  .over-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px; }
+  .over-stat{ padding:9px 6px; border-radius:10px; background:rgba(15,23,42,.72); border:1px solid rgba(148,163,184,.12); }
+  .over-stat span{ display:block; color:#94a3b8; font-size:10px; margin-bottom:3px; }
+  .over-stat strong{ color:#f8fafc; font-size:17px; }
+  .over-best{ margin:5px 0 15px; color:#fbbf24; font-size:12px; }
+  .game-over-actions{ display:flex; gap:8px; justify-content:center; }.game-over-actions button{ flex:1; }
+  .skills{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .skill-btn{ appearance:none; border:1px solid rgba(103,232,249,.35); border-radius:11px; padding:8px 10px; color:#e0f2fe; background:linear-gradient(135deg,rgba(8,47,73,.92),rgba(15,23,42,.92)); cursor:pointer; text-align:left; display:grid; grid-template-columns:1fr auto; align-items:center; }
+  .skill-btn.dash{ border-color:rgba(251,191,36,.38); background:linear-gradient(135deg,rgba(78,45,4,.92),rgba(15,23,42,.92)); }
+  .skill-btn:active{ transform:scale(.97); }.skill-btn:disabled{ cursor:not-allowed; filter:saturate(.35); opacity:.68; }
+  .skill-btn span{ font-size:12px; font-weight:800; }.skill-btn strong{ font-size:11px; color:#67e8f9; }.skill-btn.dash strong{ color:#fcd34d; }.skill-btn small{ grid-column:1 / -1; color:#94a3b8; font-size:10px; margin-top:2px; }
   .pad-help{ color:var(--muted); font-size:11px; margin-top:10px; text-align:center; line-height:1.7; }
   .pad-help kbd{
     background:#0b1a22; border:1px solid #1f3a48; padding:1px 5px; border-radius:4px;
@@ -79,13 +96,20 @@
     <div>躲避<b id="dodge">0</b></div>
     <div>连躲<b id="combo">x0</b></div>
     <div>难度<b id="level">Lv.1</b></div>
+    <div class="coin-stat">金币<b id="coins">0</b></div>
+    <div class="shield-stat">护盾<b id="shieldCount">1</b></div>
     <div>最高<b id="best">0</b>s</div>
+    <div>版本<b>v2.0</b></div>
   </div>
-  <canvas id="game" width="400" height="560" role="img" aria-label="蛋仔避闪电游戏区域">您的浏览器不支持 Canvas，请使用最新版 Chrome、Edge 或 Firefox。</canvas>
+  <div class="game-stage">
+    <canvas id="game" width="400" height="560" role="img" aria-label="蛋仔避闪电游戏区域">您的浏览器不支持 Canvas，请使用最新版 Chrome、Edge 或 Firefox。</canvas>
+    <div class="game-over" id="gameOver" hidden><div class="game-over-card"><div class="over-kicker">LIGHTNING RUN COMPLETE</div><h2 id="overTitle">💥 被劈中啦！</h2><p class="over-reason" id="overReason">下一局继续收集金币，冲得更远！</p><div class="over-grid"><div class="over-stat"><span>存活时间</span><strong id="overTime">0.0s</strong></div><div class="over-stat"><span>本局金币</span><strong id="overCoins">0</strong></div><div class="over-stat"><span>躲避闪电</span><strong id="overDodge">0</strong></div><div class="over-stat"><span>到达难度</span><strong id="overLevel">Lv.1</strong></div></div><div class="over-best" id="overBest">🏆 最高纪录：0.0s</div><div class="game-over-actions"><button id="overRestartBtn">再来一局</button><button class="secondary" id="overCloseBtn">查看战场</button></div></div></div>
+  </div>
 
+  <div class="skills"><button class="skill-btn" id="shieldBtn"><span>🛡️ 护盾</span><strong id="shieldReady">可用</strong><small>Q 键 · 抵挡一次雷击</small></button><button class="skill-btn dash" id="dashBtn"><span>⚡ 冲刺</span><strong id="dashReady">就绪</strong><small>Shift / E 键 · 高速移动且无敌</small></button></div>
   <div class="pad-help">
     键盘 <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> / <kbd>WASD</kbd> 移动 ·
-    触屏 <b>点击/拖动移动</b> · <kbd>Space</kbd> 暂停 · <kbd>R</kbd> 重开
+    触屏 <b>点击/拖动移动</b> · <kbd>Q</kbd> 护盾 · <kbd>E</kbd> 冲刺 · <kbd>Space</kbd> 暂停
   </div>
 
   <div class="actions">
@@ -443,7 +467,7 @@
     }
   }
 
-  const VERSION = 'v12';
+  const VERSION = 'v2.0';
   const MAX_LEVEL = 8;
   const LEVEL_NAMES = [
     '热身', '升温', '疾风', '雷暴',
@@ -579,6 +603,7 @@
     if(dx || dy){
       const length = Math.hypot(dx, dy);
       speed *= boostTimer > 0 ? 1.18 : 1;
+      speed *= dashTimer > 0 ? 2.45 : 1;
       const distance = Math.min(length, speed*dt);
       eggy.vx = dx/length*speed;
       eggy.vy = dy/length*speed;
@@ -613,6 +638,12 @@
           b.timer = strikeLife; b.life = strikeLife;
           flashFrames = Math.max(flashFrames, 9);
           if(!boltSoundPlayed){ playBolt(); boltSoundPlayed = true; }
+          if(distance < b.danger && shieldTimer > 0){
+            shieldTimer = 0; b.phase='fade'; b.timer=14; b.life=14; flashFrames=Math.max(flashFrames,14); playSkill(); showBanner('🛡️ 护盾挡住了雷击！',1.0); continue;
+          }
+          if(distance < b.danger && dashTimer > 0){
+            b.phase='fade'; b.timer=14; b.life=14; dodgesThisTick++; showBanner('⚡ 冲刺穿过雷区！',0.8); continue;
+          }
           if(distance < b.danger){
             lastDeath = {dist:Math.round(distance), danger:Math.round(b.danger),
               ex:Math.round(eggy.x), ey:Math.round(eggy.y), bx:Math.round(b.x),
@@ -720,6 +751,7 @@
   canvas.addEventListener('pointercancel', stopDragging);
 
   function startGame(){
+    resetUpgrade();
     if(started) saveBest();
     if(rafId !== null){ cancelAnimationFrame(rafId); rafId = null; }
     clearKeys(); dragging = false; pointerTarget = null; bolts = [];
@@ -764,6 +796,42 @@
     lastT = t;
     update(dt); draw(); ensureLoop();
   }
+
+
+  // === v2.0 金币、护盾、冲刺升级 ===
+  let pickups = [];
+  let runCoins = 0;
+  let shieldCharges = 1, shieldTimer = 0;
+  let dashTimer = 0, dashCooldown = 0, pickupTimer = 70;
+  let totalCoins = 0;
+  try{ totalCoins = Math.max(0, Number(localStorage.getItem('eggy_coins')) || 0); }catch(e){}
+  const coinsEl = document.getElementById('coins');
+  const shieldCountEl = document.getElementById('shieldCount');
+  const shieldBtn = document.getElementById('shieldBtn');
+  const shieldReadyEl = document.getElementById('shieldReady');
+  const dashBtn = document.getElementById('dashBtn');
+  const dashReadyEl = document.getElementById('dashReady');
+  const gameOverEl = document.getElementById('gameOver');
+  const overTitleEl = document.getElementById('overTitle');
+  const overReasonEl = document.getElementById('overReason');
+  const overTimeEl = document.getElementById('overTime');
+  const overCoinsEl = document.getElementById('overCoins');
+  const overDodgeEl = document.getElementById('overDodge');
+  const overLevelEl = document.getElementById('overLevel');
+  const overBestEl = document.getElementById('overBest');
+  function playCoin(){ if(muted) return; try{ const a=audio(),o=a.createOscillator(),g=a.createGain(); o.type='sine';o.frequency.setValueAtTime(660,a.currentTime);o.frequency.exponentialRampToValueAtTime(1320,a.currentTime+.12);g.gain.setValueAtTime(.07,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.16);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.16); }catch(e){} }
+  function playSkill(){ if(muted) return; try{ const a=audio(),o=a.createOscillator(),g=a.createGain();o.type='triangle';o.frequency.setValueAtTime(220,a.currentTime);o.frequency.exponentialRampToValueAtTime(880,a.currentTime+.18);g.gain.setValueAtTime(.1,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.22);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.22); }catch(e){} }
+  function drawPickup(p){ const q=1+Math.sin(frame*.12+p.seed)*.08;ctx.save();ctx.translate(p.x,p.y);ctx.scale(q,q);ctx.shadowBlur=16;ctx.shadowColor=p.type==='coin'?'#fbbf24':'#22d3ee';ctx.fillStyle=p.type==='coin'?'#fbbf24':'#22d3ee';ctx.beginPath();ctx.arc(0,0,p.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle=p.type==='coin'?'#fff7ae':'#ecfeff';ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(p.type==='coin'?'¢':'✦',0,1);ctx.restore(); }
+  function spawnPickup(type){ let p={x:W/2,y:H/2};for(let i=0;i<18;i++){p={x:28+Math.random()*(W-56),y:48+Math.random()*(H-100)};if(bolts.every(b=>b.phase==='fade'||Math.hypot(p.x-b.x,p.y-b.y)>b.danger+22))break;}pickups.push({type:type,x:p.x,y:p.y,r:type==='coin'?10:12,life:900,seed:Math.random()*10}); }
+  function refreshUpgradeStats(){ coinsEl.textContent=runCoins;shieldCountEl.textContent=shieldCharges;shieldReadyEl.textContent=shieldTimer>0?shieldTimer.toFixed(1)+'s':(shieldCharges?'可用':'空');dashReadyEl.textContent=dashTimer>0?dashTimer.toFixed(1)+'s':(dashCooldown>0?dashCooldown.toFixed(1)+'s':'就绪');shieldBtn.disabled=!started||!alive||paused||!shieldCharges||shieldTimer>0;dashBtn.disabled=!started||!alive||paused||dashTimer>0||dashCooldown>0; }
+  function activateShield(){if(!started||!alive||paused||!shieldCharges||shieldTimer>0)return;shieldCharges--;shieldTimer=5.5;playSkill();showBanner('🛡️ 护盾展开：可以挡下一次雷击！',1.5);refreshUpgradeStats();}
+  function activateDash(){if(!started||!alive||paused||dashTimer>0||dashCooldown>0)return;dashTimer=.75;dashCooldown=5.5;playSkill();showBanner('⚡ 冲刺！短时间无敌！',1.1);refreshUpgradeStats();}
+  const baseUpdate=update; update=function(dt){baseUpdate(dt);if(!alive||paused||!started)return;shieldTimer=Math.max(0,shieldTimer-dt);dashTimer=Math.max(0,dashTimer-dt);dashCooldown=Math.max(0,dashCooldown-dt);pickupTimer-=dt*60;if(pickupTimer<=0){spawnPickup(Math.random()<.18&&shieldCharges<3?'shield':'coin');pickupTimer=Math.max(105,245-level*12);}for(const p of pickups){p.life-=dt*60;if(Math.hypot(eggy.x-p.x,eggy.y-p.y)<eggy.r+p.r){p.dead=true;if(p.type==='coin'){runCoins++;totalCoins++;playCoin();if(runCoins%5===0)showBanner('🪙 金币 +'+runCoins+'：继续冲！',1);}else{shieldCharges=Math.min(3,shieldCharges+1);playSkill();showBanner('✦ 获得护盾充能！',1.2);}}}pickups=pickups.filter(p=>!p.dead&&p.life>0);refreshUpgradeStats();};
+  const baseDraw=draw; draw=function(){baseDraw();for(const p of pickups)drawPickup(p);if(shieldTimer>0&&(alive||!started)){ctx.save();ctx.strokeStyle='rgba(103,232,249,.82)';ctx.lineWidth=3;ctx.shadowColor='#22d3ee';ctx.shadowBlur=12;ctx.beginPath();ctx.arc(eggy.x,eggy.y-2,eggy.r*1.7,0,Math.PI*2);ctx.stroke();ctx.restore();}if(dashTimer>0&&alive){ctx.save();ctx.strokeStyle='rgba(251,191,36,.8)';ctx.lineWidth=3;ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(eggy.x,eggy.y,eggy.r*1.85,0,Math.PI*2);ctx.stroke();ctx.restore();}};
+  const baseGameOver=gameOver;gameOver=function(){baseGameOver();try{localStorage.setItem('eggy_coins',String(totalCoins));}catch(e){};overTitleEl.textContent=survived>=best&&survived>0?'🏆 新纪录！':'💥 被劈中啦！';overReasonEl.textContent=lastDeath?'距离雷心 '+lastDeath.dist+'px，下一局试试护盾或冲刺。':'这一局完成得很棒，继续挑战更高难度！';overTimeEl.textContent=survived.toFixed(1)+'s';overCoinsEl.textContent='+'+runCoins;overDodgeEl.textContent=dodged;overLevelEl.textContent='Lv.'+level;overBestEl.textContent='🏆 最高纪录：'+best.toFixed(1)+'s · 累计金币：'+totalCoins;gameOverEl.hidden=false;refreshUpgradeStats();};
+  function resetUpgrade(){pickups=[];runCoins=0;shieldCharges=1;shieldTimer=0;dashTimer=0;dashCooldown=0;pickupTimer=70;gameOverEl.hidden=true;refreshUpgradeStats();}
+  document.getElementById('overRestartBtn').addEventListener('click',function(){startGame();});document.getElementById('overCloseBtn').addEventListener('click',function(){gameOverEl.hidden=true;draw();});shieldBtn.addEventListener('click',activateShield);dashBtn.addEventListener('click',activateDash);
+  window.addEventListener('keydown',function(e){const k=e.key.toLowerCase();if(k==='q'){activateShield();e.preventDefault();}if(k==='e'||k==='shift'){activateDash();e.preventDefault();}});refreshUpgradeStats();
 
   startBtn.textContent = '开始';
   updateStats();
